@@ -1,0 +1,167 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "FinetuneLLMs"
+version = "0.1.0"
+description = "Finetune LLMs for various tasks"
+requires-python = ">=3.8"
+license = { file = "LICENCE" }
+keywords = ["finetuning", "transformers", "huggingface", "nlp"]
+authors = [{ name = 'Pavan Kumar Kandapagari', email = '785pavan@gmail.com' }]
+maintainers = [
+    { name = 'Pavan Kumar Kandapagari', email = '785pavan@gmail.com' },
+]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language: Python :: 3",
+    "Programming Language: Python :: 3.8",
+    "Programming Language: Python :: 3.9",
+    "Programming Language: Python :: 3.10",
+    "Programming Language: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
+
+dependencies = [
+    "accelerate",
+    "bitsandbytes",
+    "datasets",
+    "einops",
+    "evaluate",
+    "peft",
+    "python-dotenv",
+    "rouge_score",
+    "scipy",
+    "transformers",
+    "trl",
+    'typer',
+]
+
+[project.optional-dependencies]
+dev = [
+    "gpustat",
+    "poethepoet",
+    "ruff",
+    "uv",
+    'coverage',
+    'isort',
+    'pytest',
+    'yapf',
+]
+
+
+[tool.ruff]
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
+# Same as Black.
+line-length = 88
+indent-width = 4
+# Assume Python 3.8
+target-version = "py38"
+
+[tool.ruff.lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
+# McCabe complexity (`C901`) by default.
+select = ["E4", "E7", "E9", "F"]
+ignore = []
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+# Enable auto-formatting of code examples in docstrings. Markdown,
+# reStructuredText code/literal blocks and doctests are all supported.
+#
+# This is currently disabled by default, but it is planned for this
+# to be opt-out in the future.
+docstring-code-format = false
+# Set the line length limit used when formatting code snippets in
+# docstrings.
+#
+# This only has an effect when the `docstring-code-format` setting is
+# enabled.
+docstring-code-line-length = "dynamic"
+
+
+[tool.poe.tasks]
+clean = """
+# Multiline commands including comments work too. Unescaped whitespace is ignored.
+rm -rf .coverage
+       .cache
+       .mypy_cache
+       .ruff_cache
+       .pytest_cache
+       ./**/__pycache__
+       ./**/*.pyc
+       ./**/*.pyo
+       ./**/notebooks/.ipynb_checkpoints
+       ./**/*.spec
+       ./.mypy_cache
+       ./**/*.egg-info
+       ./**/wandb/
+       cov_html
+       build
+       dist
+"""
+yapf = "yapf --recursive --exclude data/ . -i"
+isort = "isort --skip data/ ."
+lint = ["isort", "yapf"]
+# install = 'uv pip install -e .[dev]'
+
+pytest = "coverage run --source=finetune_llm -m pytest --color=yes tests/"
+coverage_html = "coverage html -d ./build/coverage_python -i --skip-empty --omit='*__init__.py'"
+coverage_xml = "coverage xml -i --skip-empty --omit='*__init__.py'"
+coverage_report = "coverage report --skip-empty --omit='*__init__.py' -m"
+test = ["pytest", "coverage_html", "coverage_xml", "coverage_report"]
+test_in_docker = "docker run -it -v $PWD:/code/finetune_llm artifactory.ar.int:5001/ml/finetune_llm:latest poe test"
+
+build = ["docker_build", "docker_tag", "docker_push"]
+docker_build = "docker build -t finetune_llm:latest ."
+docker_push = "docker push artifactory.ar.int:5001/ml/finetune_llm:latest"
+docker_tag = "docker image tag finetune_llm:latest artifactory.ar.int:5001/ml/finetune_llm:latest"
